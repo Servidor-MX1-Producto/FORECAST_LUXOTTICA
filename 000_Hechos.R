@@ -55,19 +55,28 @@
   #0 <- Despliegue
   Modo <- 1
   
-  rSharePoint <- ifelse(Modo == 1, file.path("Documents", "Development", "REPORTES"), file.path("GrandVision/MX1-MV Supply Chain - Documentos", "Reportes"))
+  rSharePoint <- ifelse(Modo == 1, file.path("Documents", "Development", "REPORTES"), file.path("GrandVision/MX1-MV Supply Chain - Documentos"))
   
   #Path de la carpeta tablas
-  rTablas <- file.path(rUser, rSharePoint, "Forecast_Luxottica", "01_Tablas")
+  rTablas <- file.path(rUser, rSharePoint, "Reportes" , "Forecast_Luxottica", "01_Tablas")
   
   #Path de la carpeta reportes
-  rReportes <- file.path(rUser, rSharePoint, "Forecast_Luxottica", "02_Reportes")
+  rReportes <- file.path(rUser, rSharePoint, "Reportes", "Forecast_Luxottica", "02_Reportes")
   
   #Path de Qlik
   rQlik_PVC <- file.path("B:", "Ventas+Vision", "1_Produccion", "3_Datos_Transformados", "PVC")
   
   #Path de Qlik Supply
   rQlik_Supply <- file.path("B:", "Ventas+Vision", "1_Produccion", "3_Datos_Transformados", "SupplyChain")
+  
+  #Path FBEM Lux
+  rFBEM_Lux <- file.path(rUser, rSharePoint, "Reportes", "FBEM", "002_FMT_LUX")
+  
+  #Path FBEM Sgi
+  rFBEM_Sgi <- file.path(rUser, rSharePoint, "Reportes", "FBEM", "007_FMT_SGI")
+  
+  #Path FBEM Mv
+  rFBEM_Mv <- file.path(rUser, rSharePoint, "Reportes", "FBEM", "011_FMT_MV")
   
   #================ Constantes ================ 
   
@@ -98,8 +107,12 @@
 }
 
 #================ Ejecucion ===================
-#Surte Almacen Mas Vision
-source("010_Coloca_Archivos.R")
+#Inventarios
+source("010_Inventarios.R")
+
+#Backorder
+source("020_BackOrder.R")
+
 
 
 
