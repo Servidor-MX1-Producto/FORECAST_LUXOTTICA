@@ -47,7 +47,7 @@ Asegurar que las carpetas se encuentren en la ruta correcta, ya que se utilizan 
 ```mermaid
 graph TD
     A([INICIO]) 
-    B[CÁLCULO INVENARIO]
+    B[CÁLCULO INVENTARIO]
     C[CÁLCULO BACKORDER]
     D([FIN])
 ```
@@ -95,7 +95,7 @@ graph TD
     C --> D[DEFINE PATHS]
     D --> E[DEFINE CONSTANTES]
     E --> F[EJECUTA 010_Inventarios.R]
-    F --> G[EJECUTA_020_BackOrder.R]
+    F --> G[EJECUTA 020_BackOrder.R]
     G --> H([FIN])
 ```
 
@@ -127,31 +127,20 @@ F --> G
 ```
 
 #### **Reglas**
--
+- Los catalogos de inventario se seleccionan del proyecto FBEM de cada banner.
+- El catalogo de sucursales define que sucursales si considerar y que no, es por ello que se recomienda un constante actualizacion.
+- Lagrupacion final se hace para la sumatoria del inventario, dado el agryupamiento.
 
-### **020_FMT_Borra_Samba.R**
+### **020_BackOrder.R**
 #### **Descripción**
-Este script está diseñado para realizar tareas de mantenimiento en la carpeta Samba, permitiendo la eliminación progresiva de controles generados en días anteriores.
+Este script calcula la proyeccion de los pedidos que se recibieron y se van a recibir.
 
 #### **Diagrama de Flujo**
 ```mermaid
 flowchart TD
 A([INICIO])
-B[DEFINE CONSTANTES Y/O PATHS EXTRAS]
-C[LEE ARCHIVOS EN CARPETA Samba]
-D[OBTENEMOS FECHA DE CREACION DE CADA ARCHIVO]
-E{ELIMINAR?}
-EY[ELIMINA ARCHIVOS]
-F([FIN])
+B([FIN])
 
-
-A --> B
-B --> C
-C --> D
-D --> E
-E --> |SI| EY
-E --> |NO| F
-EY --> F
 ```
 
 #### **Reglas**
@@ -167,16 +156,16 @@ No hay reportes de Power Bi que consuman reportes de este proyecto
 
 | Día | Hora | 
 | :----: | :-----: |
-| Lunes | 6:20 am |  
-| Martes | 6:20 am |  
-| Miércoles | 6:20 am |  
-| Jueves | 6:20 am |  
-| Viernes | 6:20 am | 
-| Sábado | 6:20 am |  
-| Domingo | 6:20 am | 
+| Lunes | 0:00 am |  
+| Martes | 0:00 am |  
+| Miércoles | 0:00 am |  
+| Jueves | 0:00 am |  
+| Viernes | 0:00 am | 
+| Sábado | 0:00 am |  
+| Domingo | 0:00 am | 
 
 #### **Archivo de Ejecución**
-DIST_FMT_GLOBAL.bat
+.bat
 
 
 
