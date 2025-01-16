@@ -66,7 +66,7 @@ tInventario <- q002CruceInf %>%
 
 
 #Lista de data frames a conservar
-vGuarda <- c("tInventario") #Agregar datos que se guardan en el environment
+vGuarda <- c("tInventario", "tArt_Cat") #Agregar datos que se guardan en el environment
 vMantener <- c(vMantener, vGuarda)
 vBorrar <- setdiff(ls(), vMantener)
 

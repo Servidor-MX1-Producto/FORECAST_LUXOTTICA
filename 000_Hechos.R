@@ -53,7 +53,7 @@
   #Path de SharePoint
   #1 <- Desarrollador
   #0 <- Despliegue
-  Modo <- 1
+  Modo <- 0
   
   rSharePoint <- ifelse(Modo == 1, file.path("Documents", "Development", "REPORTES"), file.path("GrandVision/MX1-MV Supply Chain - Documentos"))
   
@@ -85,6 +85,9 @@
   
   #Mes
   cMes <- substring((Sys.time()-3), 6, 7)
+  
+  #Semana
+  cSemana <- as.numeric(strftime(today(), format("%V")))
   
   #Día
   cDia <- substring((Sys.time()-3), 9, 10)
