@@ -79,7 +79,6 @@
   rFBEM_Mv <- file.path(rUser, rSharePoint, "Reportes", "FBEM", "011_FMT_MV")
   
   #================ Constantes ================ 
-  
   #Año 
   cAnio <- substring((Sys.time()-3), 1, 4)
   
@@ -103,6 +102,30 @@
   cSemanas <- 8
   cFechaSemanas <- (today() -1) %m+% weeks(-cSemanas)
   
+  #================ Catalogos ================ 
+  #Articulo de Catalogo
+  tArt_Cat <- read.csv(file.path(rQlik_PVC, "ART_CAT.csv"), header = TRUE, sep = ",") %>% 
+    rename_all(toupper) %>% 
+    filter(ID_GENERICO == "A") %>% #Filtramos puro Armazon
+    rename(SKU = 1) %>% 
+    mutate(EAN = fRight(EAN, 13)) %>% 
+    mutate(
+      # Usamos case_when para definir tipo de marca
+      EB_EL_3P = case_when(
+        ID_PROVEEDOR == "LUM" ~ "EL",    #Para Proveedor "LUM" se usa "EL"
+        ID_PROVEEDOR == "GVSC" ~ "EB",   #Para Proveedor "GVSC" se usa "EB"
+        TRUE ~ "3P"                      #Para todo lo demas usamos "3P" 
+      )) %>% 
+    mutate(
+      #Usamos case_when para definir tipo de SKU
+      FRAMES_SUN = case_when(
+        ID_TIPO == "O" ~ "FRAMES",    #Para Tipo "O" se usa "Frames"
+        TRUE ~ "SUN"                  #Para todo lo demas usamos "Sun" 
+      )) %>% 
+    arrange(desc(SKU)) %>%
+    select(SKU, ID_TIPO, FRAMES_SUN, ID_LINEA, PACK, EAN, EB_EL_3P, MARCA, ID_PROVEEDOR, ID_GENERICO) %>% 
+    unique()
+  
   #Elementos a mantener en el environment
   vMantener <- c("vMantener")
   vMantener <- c(vMantener, ls())
@@ -116,7 +139,11 @@ source("010_Inventarios.R")
 #Backorder
 source("020_BackOrder.R")
 
+#Ventas
+source("030_Ventas.R")
 
+#Datos Estimados (Facing y SellOut)
+source("040_Data_Estimada.R")
 
 
 rm(list = ls())
