@@ -32,15 +32,12 @@ q000VentasClean <- tVentas_Arm %>%
 tVenta <- q000VentasClean %>% 
   left_join(tArt_Cat[,c("SKU", "FRAMES_SUN", "ID_LINEA", "PACK", "EB_EL_3P", "MARCA")], by = "SKU") %>% 
   filter(EB_EL_3P == "EL") %>% #Filtra Tipo de Marca
-  filter(ANIO == as.integer(cAnio)) %>% 
-  filter(MES == as.integer(cMes)) %>% 
-  filter(SEMANA == as.integer(cSemana) - 1) %>% 
+  filter(ANIO == as.integer(cAnio)) %>% #Filtramos el anio en el que ejecutamos el proceso
+  filter(MES == as.integer(cMes)) %>% #Filtramos el mes en el que ejecutamos el proceso
   group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
   summarise(VENTA = sum(CANT)) %>% 
   mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
   
-
-
 #Lista de data frames a conservar
 vGuarda <- c("tVenta") #Agregar datos que se guardan en el environment
 vMantener <- c(vMantener, vGuarda)

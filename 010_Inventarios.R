@@ -45,7 +45,6 @@ tInventario <- q002CruceInf %>%
   summarise(INVENTARIO = sum(EXISTENCIA)) %>% 
   mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
 
-
 #Lista de data frames a conservar
 vGuarda <- c("tInventario") #Agregar datos que se guardan en el environment
 vMantener <- c(vMantener, vGuarda)

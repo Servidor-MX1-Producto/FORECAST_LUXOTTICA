@@ -136,7 +136,7 @@
 #Inventarios
 source("010_Inventarios.R")
 
-#Backorder
+#Backorder (Shipment y Pedidos Pendientes)
 source("020_BackOrder.R")
 
 #Ventas
