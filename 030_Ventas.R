@@ -20,24 +20,27 @@ q000VentasClean <- tVentas_Arm %>%
   mutate(FECHA = as.Date(FECHA, format("%Y-%m-%d"))) %>% 
   mutate(SEMANA = as.numeric(strftime(FECHA, format("%V")))) %>% 
   mutate(MES = month(FECHA)) %>% 
-  mutate(ANIO = year(FECHA)) %>% 
-  mutate(BANNER = case_when(
-    ID_EMPRESA == 7 ~ "SGI",
-    ID_EMPRESA == 2 ~ "LUX",
-    ID_EMPRESA == 11 ~ "MV",
-    TRUE ~ NA_character_  # Corrección: NA explícito para tipo character  # En caso de que haya otros valores, los mantenemos como están
-  )) %>% 
-  select(FECHA, ANIO, MES, SEMANA, BANNER, ID_ALMACEN, SKU, CANT)
+  mutate(ANIO = year(FECHA))  %>% 
+  rename(VENTA = CANT) %>% 
+  select(FECHA, ANIO, MES, SEMANA, ID_EMPRESA, ID_ALMACEN, SKU, VENTA)
 
-tVenta <- q000VentasClean %>% 
-  left_join(tArt_Cat[,c("SKU", "FRAMES_SUN", "ID_LINEA", "PACK", "EB_EL_3P", "MARCA")], by = "SKU") %>% 
-  filter(EB_EL_3P == "EL") %>% #Filtra Tipo de Marca
-  filter(ANIO == as.integer(cAnio)) %>% #Filtramos el anio en el que ejecutamos el proceso
-  filter(SEMANA == as.integer(cSemana)) %>% #Filtramos el mes en el que ejecutamos el proceso
-  group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
-  summarise(VENTA = sum(CANT)) %>% 
-  mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
-  
+#Cruza y filtra Informacion 
+q000InfoFormat <- q000VentasClean %>% 
+  left_join(tArt_Cat[,c("SKU", "TIPO", "ID_LINEA", "PACK", "ID_PROVEEDOR", "MARCA")], by = "SKU") %>% 
+  filter(ID_PROVEEDOR == "LUM") %>% #Filtra Tipo de Marca
+  select(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, VENTA)
+
+#Casteo de valores en dataframe final
+tVenta <- q000InfoFormat %>% 
+  mutate(
+    ID_EMPRESA = as.character(ID_EMPRESA),
+    ANIO = as.integer(ANIO),
+    SEMANA = as.integer(SEMANA),
+    ID_LINEA = as.character(ID_LINEA),
+    PACK = as.character(PACK),
+    TIPO = as.character(TIPO),
+    VENTA = as.integer(VENTA))
+
 #Lista de data frames a conservar
 vGuarda <- c("tVenta") #Agregar datos que se guardan en el environment
 vMantener <- c(vMantener, vGuarda)

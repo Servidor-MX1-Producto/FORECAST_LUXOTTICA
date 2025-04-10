@@ -1,10 +1,10 @@
 #================ About ================
 # Pasos de ejecución:
 #   Pedidos Pendientes
-#     1.- Extraccion de info base
-#     2.- Limpia y formato de la informacion a usar
-#     3.- quitamos los shipments que van a llegar
-#     4.- Cruce, filtro y consolidacion de informacion a usar
+#     1.- 
+#     2.- 
+#     3.- 
+#     4.- 
 
 #================ Importaciones ===================
 #Pedidos Pendientes
@@ -19,26 +19,37 @@ q001PPendientesClean <- tPedidos_Pendientes %>%
   mutate(SEMANA = as.numeric(strftime(FECHA, format("%V")))) %>% #Define semana
   mutate(MES = month(FECHA)) %>% #Define mes
   mutate(ANIO = year(FECHA)) %>% #Define anio  
-  mutate(BANNER = case_when(
-      CEDIS == "NARANJO" ~ "MV",
-      CEDIS == "PINO" ~ "LUX",
-      CEDIS == "CANCUN" ~ "SGI",
+  mutate(ID_EMPRESA = case_when(
+      CEDIS == "NARANJO" ~ "11",
+      CEDIS == "PINO" ~ "2",
+      CEDIS == "CANCUN" ~ "7",
       TRUE ~ NA_character_  # Corrección: NA explícito para tipo character  # En caso de que haya otros valores, los mantenemos como están
     )) %>% 
   rename(SHIPMENT = STARS) %>% 
-  select(ID_PEDIDO, SHIPMENT, CANTIDAD, ENTREGADO, PENDIENTE, SKU, EAN, ESTADO, PEDIDO_PEND, BANNER, FECHA, ANIO, MES, SEMANA)
+  select(ID_PEDIDO, SHIPMENT, CANTIDAD, ENTREGADO, PENDIENTE, SKU, EAN, ESTADO, PEDIDO_PEND, ID_EMPRESA, FECHA, ANIO, MES, SEMANA)
 
-#Cruza, Filtra y Agrupa Informacion de PedidosPendientes
-tPed_Pendiente <- q001PPendientesClean %>% 
-  left_join(tArt_Cat[,c("SKU", "ID_LINEA", "PACK", "FRAMES_SUN", "EB_EL_3P")], by = "SKU") %>% #Cruce con Skus
-  filter(EB_EL_3P == "EL") %>% #Filtra Tipo de Marca
+#Cruza y filtra Informacion 
+q001InfoFormat <- q001PPendientesClean %>% 
+  left_join(tArt_Cat[,c("SKU", "ID_LINEA", "PACK", "TIPO", "ID_PROVEEDOR")], by = "SKU") %>% #Cruce con catalogo de Articulos
+  filter(ID_PROVEEDOR == "LUM") %>% #Filtra Tipo de Marca
   filter(PEDIDO_PEND == "Y") %>% #Filtro pedido pendiente
-  filter(ANIO == as.integer(cAnio)) %>% 
-  filter(SEMANA == as.integer(cSemana)) %>% 
-  group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
-  summarise(PENDIENTE = sum(PENDIENTE)) %>% 
-  mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
+  select(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, PENDIENTE)
 
+
+#Checar fecha promesa, en caso de no tener olocar fecha promesa de 3 semanas 
+
+
+
+#Casteo de valores en dataframe final
+tPed_Pendiente <- q001InfoFormat %>% 
+  mutate(
+    ID_EMPRESA = as.character(ID_EMPRESA),
+    ANIO = as.integer(ANIO),
+    SEMANA = as.integer(SEMANA),
+    ID_LINEA = as.character(ID_LINEA),
+    PACK = as.character(PACK),
+    TIPO = as.character(TIPO),
+    PENDIENTE = as.integer(PENDIENTE))
 
 #Lista de data frames a conservar
 vGuarda <- c("tPed_Pendiente") #Agregar datos que se guardan en el environment

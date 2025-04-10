@@ -107,23 +107,18 @@
   tArt_Cat <- read.csv(file.path(rQlik_PVC, "ART_CAT.csv"), header = TRUE, sep = ",") %>% 
     rename_all(toupper) %>% 
     filter(ID_GENERICO == "A") %>% #Filtramos puro Armazon
-    rename(SKU = 1) %>% 
+    rename(SKU = 1) %>%
+    rename(TIPO = ID_TIPO) %>% 
     mutate(EAN = fRight(EAN, 13)) %>% 
-    mutate(
-      # Usamos case_when para definir tipo de marca
-      EB_EL_3P = case_when(
-        ID_PROVEEDOR == "LUM" ~ "EL",    #Para Proveedor "LUM" se usa "EL"
-        ID_PROVEEDOR == "GVSC" ~ "EB",   #Para Proveedor "GVSC" se usa "EB"
-        TRUE ~ "3P"                      #Para todo lo demas usamos "3P" 
-      )) %>% 
-    mutate(
-      #Usamos case_when para definir tipo de SKU
-      FRAMES_SUN = case_when(
-        ID_TIPO == "O" ~ "FRAMES",    #Para Tipo "O" se usa "Frames"
-        TRUE ~ "SUN"                  #Para todo lo demas usamos "Sun" 
-      )) %>% 
+    # mutate(
+    #   # Usamos case_when para definir tipo de marca
+    #   EB_EL_3P = case_when(
+    #     ID_PROVEEDOR == "LUM" ~ "EL",    #Para Proveedor "LUM" se usa "EL"
+    #     ID_PROVEEDOR == "GVSC" ~ "EB",   #Para Proveedor "GVSC" se usa "EB"
+    #     TRUE ~ "3P"                      #Para todo lo demas usamos "3P" 
+    #   )) %>% 
     arrange(desc(SKU)) %>%
-    select(SKU, ID_TIPO, FRAMES_SUN, ID_LINEA, PACK, EAN, EB_EL_3P, MARCA, ID_PROVEEDOR, ID_GENERICO) %>% 
+    select(SKU, TIPO, ID_LINEA, PACK, EAN, MARCA, ID_PROVEEDOR, ID_GENERICO) %>% 
     unique()
   
   #Elementos a mantener en el environment
@@ -143,7 +138,7 @@ source("020_BackOrder.R")
 source("030_Ventas.R")
 
 #Datos Estimados (Facing y SellOut)
-source("040_Data_Estimada.R")
+#source("040_Data_Estimada.R")
 
 
 rm(list = ls())
