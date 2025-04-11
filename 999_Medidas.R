@@ -35,58 +35,55 @@ tDataFrameCons <- rbind(
   tVenta[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")],
   tFacingEst[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")],
   tForecastEst[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")]) %>% 
-  unique() 
+  unique() %>% 
+  mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
+
+#Inventario
+q000Inv <- tInventario %>% 
+  mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
 
 #Pedidos Pendientes
 q000PedPend <- tPed_Pendiente %>% 
-  filter(SEMANA == as.numeric(cSemana)) %>% 
-  group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
+  filter(SEMANA <= as.numeric(cSemana)) %>% #En la semana inicial tomaremos en cuenta todos los pedidos pendientes que tengamos de la semana a ejecutar y semanas atras 
+  group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
   summarise(PENDIENTE = sum(PENDIENTE)) %>% 
-  mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
-
-#Venta de la semana
-q000Venta <- tSellOut %>% 
-  filter(SEMANA == as.numeric(cSemana)) %>% 
-  group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
-  summarise(VENTA = sum(VENTA)) %>% 
-  mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
+  mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
 
 #Venta estimada
-q000VtaEst <- tSellOut %>%
-  #filter(SEMANA == as.numeric(strftime(today() + days(21), format("%V")))) %>% #Filtramos la semana mas lead time
-  filter(SEMANA == as.numeric(cSemana) + 1) %>% 
-  group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>%
-  summarise(VTA_ESTIMADA = sum(VENTA)) %>%
-  mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
+q000FrcstEst <- tForecastEst %>%
+  filter(SEMANA == as.numeric(cSemana)) %>% 
+  group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
+  summarise(FORECAST = sum(FORECAST)) %>% 
+  mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
 
 #Facing Estimado
-q000FacingEst <- tFacing %>% 
-  #filter(SEMANA == as.numeric(strftime(today() + days(21), format("%V")))) %>% #Filtramos la semana mas lead time
+q000FacingEst <- tFacingEst %>% 
   filter(SEMANA == as.numeric(cSemana)) %>% 
-  group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
-  summarise(FACING_ESTIMADO = sum(FACING)) %>% 
-  mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
+  group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
+  summarise(FACING = sum(FACING)) %>% 
+  mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
 
 #Cruce de informacion
 q000CruceInfo <- tDataFrameCons %>% 
-  left_join(tInventario[,c("ID_BFPL", "INVENTARIO")], by = "ID_BFPL") %>% 
-  left_join(q000PedPend[,c("ID_BFPL", "PENDIENTE")], by = "ID_BFPL") %>% 
-  left_join(q000Venta[,c("ID_BFPL", "VENTA")], by = "ID_BFPL") %>% 
-  left_join(q000VtaEst[,c("ID_BFPL", "VTA_ESTIMADA")], by = "ID_BFPL") %>% 
-  left_join(q000FacingEst[,c("ID_BFPL", "FACING_ESTIMADO")], by = "ID_BFPL") %>% 
-  mutate_at(c("INVENTARIO", "PENDIENTE", "VENTA", "VTA_ESTIMADA", "FACING_ESTIMADO"), ~replace(., is.na(.), 0)) 
+  left_join(q000Inv[,c("ID_ELPT", "INVENTARIO")], by = "ID_ELPT") %>% 
+  left_join(q000PedPend[,c("ID_ELPT", "PENDIENTE")], by = "ID_ELPT") %>% 
+  left_join(q000FrcstEst[,c("ID_ELPT", "FORECAST")], by = "ID_ELPT") %>% 
+  left_join(q000FacingEst[,c("ID_ELPT", "FACING")], by = "ID_ELPT") %>% 
+  mutate_at(c("INVENTARIO", "PENDIENTE", "FORECAST", "FACING"), ~replace(., is.na(.), 0)) 
 
 #Calculos
 q001Ncsd <- q000CruceInfo %>% 
-  mutate(INV_F = INVENTARIO + PENDIENTE - VENTA) %>% #Inventario Final
-  mutate(INV_I = FACING_ESTIMADO + VTA_ESTIMADA) %>% 
+  mutate(INV_F = INVENTARIO + PENDIENTE - FORECAST) %>% #Inventario Final
+  mutate(INV_F = ifelse(INV_F < 0, 0, INV_F)) %>% 
+  mutate(INV_I = FACING + FORECAST) %>% 
   mutate(NECESIDAD = INV_I - INV_F) %>% 
   mutate(NECESIDAD = ifelse(NECESIDAD < 0, 0, NECESIDAD)) %>% 
-  select(BANNER, FRAMES_SUN, PACK, ID_LINEA, INVENTARIO, PENDIENTE, VENTA, VTA_ESTIMADA, FACING_ESTIMADO, INV_I, INV_F, NECESIDAD)
+  arrange(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
+  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, FACING, INV_F, INV_I, NECESIDAD)
 
 
 #Escribe reporte de n semanas adelante; n = lead time
-cNombreArchivo <- paste("NCSD_", "W", strftime(today() + days(21), format("%V")), ".csv", sep = "")
+cNombreArchivo <- paste("NCSD_", "W", cSemana, ".csv", sep = "")
 
 write.csv(q001Ncsd, file.path(rReportes, cAnio, cNombreArchivo), row.names = FALSE)
 
@@ -105,58 +102,49 @@ for (n in 1:cSemanasSim) {
   
   #Inventario
   q002Inv <- q001Ncsd %>% 
-    select(BANNER, FRAMES_SUN, PACK, ID_LINEA, NECESIDAD) %>% 
-    rename(INVENTARIO = NECESIDAD) %>% 
-    group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
+    select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INV_F) %>% 
+    rename(INVENTARIO = INV_F) %>% 
+    group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
     summarise(INVENTARIO = sum(INVENTARIO)) %>% 
-    mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
+    mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
   
   #Pedidos pendientes
   q002PedPend <- tPed_Pendiente %>% 
     filter(SEMANA == as.numeric(cSemanaCiclo)) %>% 
-    group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
+    group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
     summarise(PENDIENTE = sum(PENDIENTE)) %>% 
-    mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
+    mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
   
-  #Venta de la semana
-  q002Venta <- tSellOut %>% 
+  #Forecast
+  q002FrcstEst<- tForecastEst %>% 
     filter(SEMANA == as.numeric(cSemanaCiclo)) %>% 
-    group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
-    summarise(VENTA = sum(VENTA)) %>% 
-    mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
+    group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
+    summarise(FORECAST = sum(FORECAST)) %>% 
+    mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
   
-  #Venta estimada
-  q002VtaEst <- tSellOut %>%
-    #filter(SEMANA == as.numeric(strftime(today() + days(21), format("%V")))) %>% #Filtramos la semana mas lead time
-    filter(SEMANA == as.numeric(cSemanaCiclo) + 1) %>% 
-    group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>%
-    summarise(VTA_ESTIMADA = sum(VENTA)) %>%
-    mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
-  
-  #Facing Estimado
-  q002FacingEst <- tFacing %>% 
-    #filter(SEMANA == as.numeric(strftime(today() + days(21), format("%V")))) %>% #Filtramos la semana mas lead time
+  #Facing 
+  q002FacingEst <- tFacingEst %>% 
     filter(SEMANA == as.numeric(cSemanaCiclo)) %>% 
-    group_by(BANNER, FRAMES_SUN, PACK, ID_LINEA) %>% 
-    summarise(FACING_ESTIMADO = sum(FACING)) %>% 
-    mutate(ID_BFPL = paste(BANNER, FRAMES_SUN, PACK, ID_LINEA, sep = "|"))
+    group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
+    summarise(FACING = sum(FACING)) %>% 
+    mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
   
   #Cruce de informacion
   q002CruceInfo <- tDataFrameCons %>% 
-    left_join(q002Inv[,c("ID_BFPL", "INVENTARIO")], by = "ID_BFPL") %>% 
-    left_join(q002PedPend[,c("ID_BFPL", "PENDIENTE")], by = "ID_BFPL") %>% 
-    left_join(q002Venta[,c("ID_BFPL", "VENTA")], by = "ID_BFPL") %>% 
-    left_join(q002VtaEst[,c("ID_BFPL", "VTA_ESTIMADA")], by = "ID_BFPL") %>% 
-    left_join(q002FacingEst[,c("ID_BFPL", "FACING_ESTIMADO")], by = "ID_BFPL") %>% 
-    mutate_at(c("INVENTARIO", "PENDIENTE", "VENTA", "VTA_ESTIMADA", "FACING_ESTIMADO"), ~replace(., is.na(.), 0)) 
+    left_join(q002Inv[,c("ID_ELPT", "INVENTARIO")], by = "ID_ELPT") %>% 
+    left_join(q002PedPend[,c("ID_ELPT", "PENDIENTE")], by = "ID_ELPT") %>% 
+    left_join(q002FrcstEst[,c("ID_ELPT", "FORECAST")], by = "ID_ELPT") %>% 
+    left_join(q002FacingEst[,c("ID_ELPT", "FACING")], by = "ID_ELPT") %>% 
+    mutate_at(c("INVENTARIO", "PENDIENTE", "FORECAST", "FACING"), ~replace(., is.na(.), 0)) 
   
   #Calculos
   q001Ncsd <- q002CruceInfo %>% 
-    mutate(INV_F = INVENTARIO + PENDIENTE - VENTA) %>% #Inventario Final
-    mutate(INV_I = FACING_ESTIMADO + VTA_ESTIMADA) %>% 
+    mutate(INV_F = INVENTARIO + PENDIENTE - FORECAST) %>% #Inventario Final
+    mutate(INV_I = FACING + FORECAST) %>% 
+    mutate(INV_F = ifelse(INV_F < 0, 0, INV_F)) %>% 
     mutate(NECESIDAD = INV_I - INV_F) %>% 
     mutate(NECESIDAD = ifelse(NECESIDAD < 0, 0, NECESIDAD)) %>% 
-    select(BANNER, FRAMES_SUN, PACK, ID_LINEA, INVENTARIO, PENDIENTE, VENTA, VTA_ESTIMADA, FACING_ESTIMADO, INV_I, INV_F, NECESIDAD)
+    select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, FACING, INV_F, INV_I, NECESIDAD)
   
   #Escribe reporte de n semanas adelante; n = lead time
   cNombreArchivo <- paste("NCSD_SIM_", "W", cSemanaCiclo, ".csv", sep = "")

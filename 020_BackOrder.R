@@ -36,7 +36,7 @@ q001InfoFormat <- q001PPendientesClean %>%
   select(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, PENDIENTE)
 
 
-#Checar fecha promesa, en caso de no tener olocar fecha promesa de 3 semanas 
+#Checar fecha promesa, en caso de no tener colocar fecha promesa de 3 semanas 
 
 
 
