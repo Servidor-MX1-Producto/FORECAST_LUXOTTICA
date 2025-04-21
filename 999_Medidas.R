@@ -47,6 +47,7 @@ q000PedPend <- tPed_Pendiente %>%
   filter(SEMANA <= as.numeric(cSemana)) %>% #En la semana inicial tomaremos en cuenta todos los pedidos pendientes que tengamos de la semana a ejecutar y semanas atras 
   group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
   summarise(PENDIENTE = sum(PENDIENTE)) %>% 
+  filter(PENDIENTE > 0) %>% 
   mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
 
 #Venta estimada
@@ -75,20 +76,18 @@ q000CruceInfo <- tDataFrameCons %>%
 q001Ncsd <- q000CruceInfo %>% 
   mutate(INV_F = INVENTARIO + PENDIENTE - FORECAST) %>% #Inventario Final
   mutate(INV_F = ifelse(INV_F < 0, 0, INV_F)) %>% 
-  mutate(INV_I = FACING + FORECAST) %>% 
-  mutate(NECESIDAD = INV_I - INV_F) %>% 
+  mutate(INV_SS = FACING + FORECAST) %>% #Inventario de Seguridad
+  mutate(NECESIDAD = INV_SS - INV_F) %>% 
   mutate(NECESIDAD = ifelse(NECESIDAD < 0, 0, NECESIDAD)) %>% 
-  arrange(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
-  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, FACING, INV_F, INV_I, NECESIDAD)
+  mutate(SEMANA = cSemana) %>% 
+  arrange(desc(ID_EMPRESA), ID_LINEA, PACK, TIPO) %>% 
+  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, FACING, INV_F, INV_SS, NECESIDAD, SEMANA)
 
-
-#Escribe reporte de n semanas adelante; n = lead time
-cNombreArchivo <- paste("NCSD_", "W", cSemana, ".csv", sep = "")
-
-write.csv(q001Ncsd, file.path(rReportes, cAnio, cNombreArchivo), row.names = FALSE)
+#Dataframe donde se ira agregando las necesidades por semana
+q003NcsdCons <- q001Ncsd
 
 #Simulacion
-cSemanasSim <- 8
+cSemanasSim <- 8 #(Considerar LEAD time por proveedor (Lead_Time + 4))
 
 #Bucle
 n <- 1
@@ -140,20 +139,24 @@ for (n in 1:cSemanasSim) {
   #Calculos
   q001Ncsd <- q002CruceInfo %>% 
     mutate(INV_F = INVENTARIO + PENDIENTE - FORECAST) %>% #Inventario Final
-    mutate(INV_I = FACING + FORECAST) %>% 
     mutate(INV_F = ifelse(INV_F < 0, 0, INV_F)) %>% 
-    mutate(NECESIDAD = INV_I - INV_F) %>% 
+    mutate(INV_SS = FACING + FORECAST) %>% 
+    mutate(NECESIDAD = INV_SS - INV_F) %>% 
     mutate(NECESIDAD = ifelse(NECESIDAD < 0, 0, NECESIDAD)) %>% 
-    select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, FACING, INV_F, INV_I, NECESIDAD)
+    mutate(SEMANA = cSemanaCiclo) %>% 
+    arrange(desc(ID_EMPRESA), ID_LINEA, PACK, TIPO) %>% 
+    select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, FACING, INV_F, INV_SS, NECESIDAD, SEMANA)
   
-  #Escribe reporte de n semanas adelante; n = lead time
-  cNombreArchivo <- paste("NCSD_SIM_", "W", cSemanaCiclo, ".csv", sep = "")
+  #Agregamos al datframe Consolidado
+  q003NcsdCons <- q003NcsdCons %>% 
+    rbind(q001Ncsd)
   
-  #write.csv(q001Ncsd, file.path(rReportes, cAnio, cNombreArchivo), row.names = FALSE)
+  
   
 }
 
-
+#Escribe reporte
+write.csv(q003NcsdCons, file.path(rReportes, "NCSD.csv"), row.names = FALSE)
 
 
 

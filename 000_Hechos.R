@@ -110,13 +110,6 @@
     rename(SKU = 1) %>%
     rename(TIPO = ID_TIPO) %>% 
     mutate(EAN = fRight(EAN, 13)) %>% 
-    # mutate(
-    #   # Usamos case_when para definir tipo de marca
-    #   EB_EL_3P = case_when(
-    #     ID_PROVEEDOR == "LUM" ~ "EL",    #Para Proveedor "LUM" se usa "EL"
-    #     ID_PROVEEDOR == "GVSC" ~ "EB",   #Para Proveedor "GVSC" se usa "EB"
-    #     TRUE ~ "3P"                      #Para todo lo demas usamos "3P" 
-    #   )) %>% 
     arrange(desc(SKU)) %>%
     select(SKU, TIPO, ID_LINEA, PACK, EAN, MARCA, ID_PROVEEDOR, ID_GENERICO) %>% 
     unique()
@@ -137,8 +130,6 @@ source("020_BackOrder.R")
 #Ventas
 source("030_Ventas.R")
 
-#Datos Estimados (Facing y SellOut)
-#source("040_Data_Estimada.R")
 
 
 rm(list = ls())

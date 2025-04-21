@@ -11,11 +11,32 @@
 tPedidos_Pendientes <- read.csv(file.path(rUser, rSharePoint, "Compras", "Pedidos", "01_Pedidos_Pendientes", "Pedidos_Pendientes.csv"), header = TRUE, sep = ",") %>% 
   rename_all(toupper) 
 
+#Lead time
+tLead_Time <- read.csv(file.path(rTablas, "LEAD_TIME.csv"), header = TRUE, sep = ",")
+
 #================ Ejecucion ===================
+#Define Lead Time de todas las lineas por proveedor
+q000LTProv <- tLead_Time %>% 
+  filter(ID_LINEA == "*") 
+
+#Define Lead Time de lineas en especifico por proveedor
+q000LTLinea <- tLead_Time %>% 
+  filter(ID_LINEA != "*") %>% 
+  mutate(ID_LPT = paste(ID_LINEA, PACK, TIPO, sep = "|"))
+
+#Define fechas promesa en caso de ser vacias o no tener datos
+q000PedidosFecha <- tPedidos_Pendientes %>% 
+  mutate(ID_LPT = paste(ID_LINEA, PACK, ID_TIPO, sep = "|")) %>% 
+  left_join(q000LTProv[,c("ID_PROVEEDOR", "LEAD_TIME_W")], by = "ID_PROVEEDOR") %>% #Left join para saber las lineas que se contemplan por proveedor
+  mutate(LEAD_TIME_W = ifelse(ID_LPT %in% q000LTLinea$ID_LPT, q000LTLinea$LEAD_TIME_W, LEAD_TIME_W)) %>% #Condicional para saber Lead Time de lineas y proveedor en especifico
+  mutate_at(c("LEAD_TIME_W"), ~replace(., is.na(.), 0)) 
+
 #Limpieza Pedidos Pendientes
-q001PPendientesClean <- tPedidos_Pendientes %>% 
+q001PPendientesClean <- q000PedidosFecha %>% 
   mutate(EAN = fRight(EAN, 13)) %>%  #Agregar validador de estados
-  mutate(FECHA = as.Date(FECHA_PROMESA, format("%d/%m/%Y"))) %>% 
+  mutate(FECHA_PROMESA = as.Date(FECHA_PROMESA, format("%d/%m/%Y"))) %>% 
+  mutate(FECHA_CAP = as.Date(FECHA_CAP, format("%d/%m/%Y"))) %>%
+  mutate(FECHA = if_else(is.na(FECHA_PROMESA), FECHA_CAP + weeks(LEAD_TIME_W), FECHA_PROMESA)) %>% #En caso de no tener fecha promesa le agregaremos a la fecha de captura las n semanas de LEAD TIME ya definidas
   mutate(SEMANA = as.numeric(strftime(FECHA, format("%V")))) %>% #Define semana
   mutate(MES = month(FECHA)) %>% #Define mes
   mutate(ANIO = year(FECHA)) %>% #Define anio  
@@ -34,11 +55,6 @@ q001InfoFormat <- q001PPendientesClean %>%
   filter(ID_PROVEEDOR == "LUM") %>% #Filtra Tipo de Marca
   filter(PEDIDO_PEND == "Y") %>% #Filtro pedido pendiente
   select(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, PENDIENTE)
-
-
-#Checar fecha promesa, en caso de no tener colocar fecha promesa de 3 semanas 
-
-
 
 #Casteo de valores en dataframe final
 tPed_Pendiente <- q001InfoFormat %>% 
