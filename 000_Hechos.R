@@ -130,6 +130,10 @@ source("020_BackOrder.R")
 #Ventas
 source("030_Ventas.R")
 
+#Necesidad
+source("040_Necesidad.R")
 
+#Requerimiento
+source("050_Requerimiento.R")
 
 rm(list = ls())

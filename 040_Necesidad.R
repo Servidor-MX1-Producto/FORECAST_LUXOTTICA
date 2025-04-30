@@ -84,13 +84,17 @@ q001Ncsd <- q000CruceInfo %>%
   select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, FACING, INV_F, INV_SS, NECESIDAD, SEMANA)
 
 #Dataframe donde se ira agregando las necesidades por semana
-q003NcsdCons <- q001Ncsd
+q004Ncsd <- q001Ncsd
 
 #Simulacion
-cSemanasSim <- 8 #(Considerar LEAD time por proveedor (Lead_Time + 4))
+#Semanas de visibilidad
+cSemanasVis <- 4
+
+#Semanas a simular
+cSemanasSim <- max(unique(tLead_Time$LEAD_TIME_W)) + cSemanasVis #(Considerar LEAD time por proveedor (Lead_Time + 4))
 
 #Bucle
-n <- 1
+#n <- 1
 for (n in 1:cSemanasSim) {
   
   #Sumamos fechas a la actual dependiendo el ciclo de la semanas
@@ -148,18 +152,47 @@ for (n in 1:cSemanasSim) {
     select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, FACING, INV_F, INV_SS, NECESIDAD, SEMANA)
   
   #Agregamos al datframe Consolidado
-  q003NcsdCons <- q003NcsdCons %>% 
+  q004Ncsd <- q004Ncsd %>% 
     rbind(q001Ncsd)
   
   
   
 }
 
+#Limitar semanas a Lead Time
+
+#Crea Id a catalogo
+q004ArtCat <- tArt_Cat %>% 
+  select(ID_LINEA, PACK, TIPO, ID_PROVEEDOR) %>% 
+  unique() %>% 
+  mutate(ID_LPT = paste(ID_LINEA, PACK, TIPO, sep = "|"))
+
+#Cruzamos para informacion para obtener proveedor
+q004NcsProv <- q004Ncsd %>% 
+  mutate(ID_LPT = paste(ID_LINEA, PACK, TIPO, sep = "|")) %>% 
+  left_join(q004ArtCat[,c("ID_LPT", "ID_PROVEEDOR")], by = "ID_LPT")
+  
+#Agregamos Lead Time por poveedor o por LPT (Linea Pack Tipo)
+q004NcsLT <- q004NcsProv %>% 
+  left_join(q000LTProv[,c("ID_PROVEEDOR", "LEAD_TIME_W")], by = "ID_PROVEEDOR") %>% #Lead Time por proveedor
+  mutate(LEAD_TIME_W = ifelse(ID_LPT %in% q000LTLinea$ID_LPT, q000LTLinea$LEAD_TIME_W, LEAD_TIME_W)) #Lead Time por LPT (Linea Pack Tipo)
+  
+#Delimita las semanas de la necesidad respecto al Lead Time mas las semanas de visibilidad
+tNecesidad <- q004NcsLT %>% 
+  mutate(LEAD_TIME_W = LEAD_TIME_W + cSemana + cSemanasVis) %>%  #Sumamos al Lead Time la semana en la que estamos y las semanas de visibilidad
+  filter(SEMANA <= LEAD_TIME_W) %>% 
+  arrange(ID_EMPRESA, ID_LINEA, PACK, TIPO, SEMANA)
+
 #Escribe reporte
-write.csv(q003NcsdCons, file.path(rReportes, "NCSD.csv"), row.names = FALSE)
+#write.csv(tNecesidad, file.path(rReportes, "NCSD.csv"), row.names = FALSE)
 
+#Lista de data frames a conservar
+vGuarda <- c("tNecesidad", "cSemanasVis") #Agregar datos que se guardan en el environment
+vMantener <- c(vMantener, vGuarda)
+vBorrar <- setdiff(ls(), vMantener)
 
-
+rm(list = vBorrar)
+rm(vBorrar)
 
 
 

@@ -68,7 +68,7 @@ tPed_Pendiente <- q001InfoFormat %>%
     PENDIENTE = as.integer(PENDIENTE))
 
 #Lista de data frames a conservar
-vGuarda <- c("tPed_Pendiente") #Agregar datos que se guardan en el environment
+vGuarda <- c("tPed_Pendiente", "tLead_Time", "q000LTProv", "q000LTLinea") #Agregar datos que se guardan en el environment
 vMantener <- c(vMantener, vGuarda)
 vBorrar <- setdiff(ls(), vMantener)
 
