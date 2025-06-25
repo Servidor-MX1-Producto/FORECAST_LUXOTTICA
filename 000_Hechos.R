@@ -131,7 +131,7 @@ source("020_BackOrder.R")
 source("030_Ventas.R")
 
 #Stock Seguridad
-#source("060_Stock_Seguridad.R")
+source("060_Stock_Seguridad.R")
 
 #Necesidad
 source("040_Necesidad.R")

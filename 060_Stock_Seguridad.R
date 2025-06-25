@@ -35,8 +35,8 @@ q001Vta <- tVenta %>%
 q001CrossVentas <- q000DataFrameBase %>% 
   left_join(q001Vta[,c("ID_EASLPT", "VENTA")], by = "ID_EASLPT") %>% 
   left_join(tForecastEst[,c("ID_EASLPT", "FORECAST")], by = "ID_EASLPT") %>% 
-  mutate_at(c("VENTA", "FORECAST"), ~replace(., is.na(.), 0)) #%>% 
-  filter(SEMANA < cSemana)
+  mutate_at(c("VENTA", "FORECAST"), ~replace(., is.na(.), 0)) %>% 
+  filter(SEMANA < cSemana) #Filtro de semana por el dato de las ventas, el cual solo traemos hasta un dia antes de la ejecucion
 
 #Calculando Error
 q002ErrorCalc <- q001CrossVentas %>% 
@@ -56,16 +56,16 @@ Z <- 1.65
 #Z <- qnorm(0.95)
 
 #Calculo del Stock de seguridad
-q004StockSeg <- q003DesvEstdr %>% 
-  mutate(STOCK_SEGURIDAD = round(Z * DESV_ERROR, 0)) %>% 
-  mutate(ID = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
+tStock_Seguridad <- q003DesvEstdr %>% 
+  mutate(STOCK_SEGURIDAD = round(Z * DESV_ERROR, 0)) 
 
+#Lista de data frames a conservar
+vGuarda <- c("tStock_Seguridad") #Agregar datos que se guardan en el environment
+vMantener <- c(vMantener, vGuarda)
+vBorrar <- setdiff(ls(), vMantener)
 
-x <- tForecastEst %>% 
-  mutate(ID = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|")) %>% 
-  left_join(q004StockSeg[,c("ID", "STOCK_SEGURIDAD")], by = "ID")
-  
-
+rm(list = vBorrar)
+rm(vBorrar)
 
 
 
