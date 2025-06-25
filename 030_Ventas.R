@@ -28,7 +28,9 @@ q000VentasClean <- tVentas_Arm %>%
 q000InfoFormat <- q000VentasClean %>% 
   left_join(tArt_Cat[,c("SKU", "TIPO", "ID_LINEA", "PACK", "ID_PROVEEDOR", "MARCA")], by = "SKU") %>% 
   filter(ID_PROVEEDOR == "LUM") %>% #Filtra Tipo de Marca
-  select(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, VENTA)
+  group_by(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO) %>% 
+  summarise(VENTA = sum(VENTA)) %>% 
+  filter(VENTA > 0)
 
 #Casteo de valores en dataframe final
 tVenta <- q000InfoFormat %>% 
