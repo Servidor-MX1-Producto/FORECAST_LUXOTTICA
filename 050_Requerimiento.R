@@ -37,7 +37,7 @@ q001Requerimiento <- q001IdSemana %>% #Tomamos dataframe base para realizar los 
   select(ID_EMPRESA, ID_LINEA, PACK, TIPO, ID_PROVEEDOR, SEMANA, ANIO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, REQUERIMIENTO)
 
 #Escribe reporte de requerimeinto
-write.csv(q001Requerimiento, file.path(rReportes, "REQUERIMIENTO2.csv"), row.names = FALSE)
+write.csv(q001Requerimiento, file.path(rReportes, "REQUERIMIENTO.csv"), row.names = FALSE)
 
 #Lista de data frames a conservar
 vGuarda <- c() #Agregar datos que se guardan en el environment
