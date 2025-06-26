@@ -19,6 +19,8 @@
   library("rio")
   if (!require("writexl")) install.packages("writexl")
   library("writexl")
+  if (!require("ISOweek")) install.packages("ISOweek")
+  library("ISOweek")
   
   #Zona Horaria
   Sys.setenv(TZ = "Etc/GMT+6")

@@ -21,17 +21,17 @@ tForecastEst <- read.csv(file.path(rTablas, "FORECAST.csv"), header = TRUE, sep 
 #Creando dataframe base
 q000DataFrameBase <- tForecastEst[,c("ID_EMPRESA", "ANIO", "SEMANA", "ID_LINEA", "PACK", "TIPO")] %>% 
   unique() %>% 
-  filter(ANIO == cAnio) %>% 
+  #filter(ANIO == cAnio) %>% 
   mutate(ID_EASLPT = paste(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, sep = "|"))
 
 #Cruzando Ventas
 #Preparando ventas
 q001Vta <- tVenta %>% 
-  filter(ANIO == cAnio) %>% 
+  #filter(ANIO == cAnio) %>% 
   arrange(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, VENTA) %>% 
   mutate(ID_EASLPT = paste(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, sep = "|"))
 
-#Cruce de la venta y del Forecast
+ #Cruce de la venta y del Forecast
 q001CrossVentas <- q000DataFrameBase %>% 
   left_join(q001Vta[,c("ID_EASLPT", "VENTA")], by = "ID_EASLPT") %>% 
   left_join(tForecastEst[,c("ID_EASLPT", "FORECAST")], by = "ID_EASLPT") %>% 
@@ -66,6 +66,3 @@ vBorrar <- setdiff(ls(), vMantener)
 
 rm(list = vBorrar)
 rm(vBorrar)
-
-
-
