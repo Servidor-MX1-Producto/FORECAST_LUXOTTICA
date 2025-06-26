@@ -187,12 +187,10 @@ q004NcsLT <- q004Ncsd %>%
 #Delimita las semanas de la necesidad respecto al Lead Time mas las semanas de visibilidad
 tNecesidad <- q004NcsLT %>% 
   arrange(ID_EMPRESA, ID_LINEA, PACK, TIPO, ANIO, SEMANA) %>% 
-  mutate(X = ISOweek2date(sprintf("%d-W%02d-1", as.numeric(ANIO), as.numeric(SEMANA)))) %>% 
-  mutate(Y = ISOweek2date(sprintf("%d-W%02d-1", as.numeric(cAnio), as.numeric(cSemana))) + weeks(LEAD_TIME_W + cSemanasVis)) %>% 
-  filter(X <= Y)
-  mutate(LEAD_TIME_W2 = LEAD_TIME_W + cSemana + cSemanasVis) #%>%  #Sumamos al Lead Time la semana en la que estamos y las semanas de visibilidad
-  filter(SEMANA <= LEAD_TIME_W) %>% 
-  arrange(ID_EMPRESA, ID_LINEA, PACK, TIPO, SEMANA)
+  mutate(DATE_WEEK = ISOweek2date(sprintf("%d-W%02d-1", as.numeric(ANIO), as.numeric(SEMANA)))) %>% #Creamos una fecha (dia inicial) a partir de la semana y anio que tenemos en data
+  mutate(DATE_LEAD_TIME = ISOweek2date(sprintf("%d-W%02d-1", as.numeric(cAnio), as.numeric(cSemana))) + weeks(LEAD_TIME_W + cSemanasVis)) %>%  #Creamos una fecha a partir de la semana que estamos ejecutando el proceso y la suma de las semanas correspondientes al lead time y semanas de visibilidad 
+  filter(DATE_WEEK <= DATE_LEAD_TIME) %>% #Filtramos que en el reporte aparezcan solo las semanas de Lead time mas las semana de visibilidad
+  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, LEAD_TIME_W, SEMANA, ANIO, ID_PROVEEDOR)
 
 #Escribe reporte
 #write.csv(tNecesidad, file.path(rReportes, "NCSD.csv"), row.names = FALSE)

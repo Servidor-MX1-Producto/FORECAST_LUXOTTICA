@@ -9,7 +9,8 @@
 #================ Ejecucion ===================
 #Definire Lead Time real y define ID Semana
 q001IdSemana <- tNecesidad %>% 
-  mutate(SEMANA_LT = LEAD_TIME_W - cSemanasVis) %>% 
+  mutate(DATE_LT = ISOweek2date(sprintf("%d-W%02d-1", as.numeric(cAnio), as.numeric(cSemana))) + weeks(LEAD_TIME_W)) %>% 
+  mutate(SEMANA_LT = as.numeric(strftime(DATE_LT, format("%V")))) %>% 
   mutate(cDelta01 = ifelse(SEMANA >= SEMANA_LT, 1, 0)) %>% #Etiquetamos semanas en las que nos puede llegar producto, tomando en cuenta el Lead Time
   group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% #Agrupamos para generar ID_SEMANA
   mutate(ID_SEMANA = cumsum(cDelta01))
@@ -23,7 +24,7 @@ q001CalcReq <- q001IdSemana %>%
 
 #Estructura al reporte de requerimiento
 q001Requerimiento <- q001IdSemana %>% #Tomamos dataframe base para realizar los cruces
-  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, SEMANA, ID_PROVEEDOR) %>% 
+  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, SEMANA, ANIO, ID_PROVEEDOR) %>% 
   mutate(cDelta02 = 1) %>% 
   group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% #Agrupamos para generar ID_SEMANA
   mutate(ID_SEMANA = cumsum(cDelta02)) %>% 
@@ -32,8 +33,8 @@ q001Requerimiento <- q001IdSemana %>% #Tomamos dataframe base para realizar los 
   mutate_at(c("REQUERIMIENTO"), ~replace(., is.na(.), 0)) %>% 
   mutate(REQUERIMIENTO = ifelse(REQUERIMIENTO < 0, 0, REQUERIMIENTO)) %>% 
   data.frame() %>% 
-  arrange(ID_EMPRESA, ID_LINEA, PACK, TIPO, SEMANA) %>% 
-  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, ID_PROVEEDOR, SEMANA, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, REQUERIMIENTO)
+  arrange(ID_EMPRESA, ID_LINEA, PACK, TIPO, ANIO, SEMANA) %>% 
+  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, ID_PROVEEDOR, SEMANA, ANIO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, REQUERIMIENTO)
 
 #Escribe reporte de requerimeinto
 write.csv(q001Requerimiento, file.path(rReportes, "REQUERIMIENTO2.csv"), row.names = FALSE)
