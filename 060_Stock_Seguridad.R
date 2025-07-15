@@ -15,23 +15,25 @@ tForecastEst <- read.csv(file.path(rTablas, "FORECAST.csv"), header = TRUE, sep 
     PACK = as.character(PACK),
     TIPO = as.character(TIPO),
     FORECAST = as.integer(FORECAST)) %>% 
+  filter(ANIO >= substring(cFechaSemanas, 1, 4)) %>% #Filtramos el anio de la venta de (n) Semanas atras
+  filter(SEMANA >= as.numeric(strftime(cFechaSemanas, format("%V")))) %>% #Filtramos la semana de la venta de (n) Semanas atras
   mutate(ID_EASLPT = paste(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, sep = "|"))
 
 #================ Ejecucion ===================
 #Creando dataframe base
 q000DataFrameBase <- tForecastEst[,c("ID_EMPRESA", "ANIO", "SEMANA", "ID_LINEA", "PACK", "TIPO")] %>% 
   unique() %>% 
-  #filter(ANIO == cAnio) %>% 
   mutate(ID_EASLPT = paste(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, sep = "|"))
 
 #Cruzando Ventas
 #Preparando ventas
 q001Vta <- tVenta %>% 
-  #filter(ANIO == cAnio) %>% 
+  filter(ANIO >= substring(cFechaSemanas, 1, 4)) %>% #Filtramos el anio de la venta de (n) Semanas atras
+  filter(SEMANA >= as.numeric(strftime(cFechaSemanas, format("%V")))) %>% #Filtramos la semana de la venta de (n) Semanas atras
   arrange(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, VENTA) %>% 
   mutate(ID_EASLPT = paste(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, sep = "|"))
 
- #Cruce de la venta y del Forecast
+#Cruce de la venta y del Forecast
 q001CrossVentas <- q000DataFrameBase %>% 
   left_join(q001Vta[,c("ID_EASLPT", "VENTA")], by = "ID_EASLPT") %>% 
   left_join(tForecastEst[,c("ID_EASLPT", "FORECAST")], by = "ID_EASLPT") %>% 
@@ -46,7 +48,7 @@ q002ErrorCalc <- q001CrossVentas %>%
 q003DesvEstdr <- q002ErrorCalc %>% 
   group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
   summarise(
-    DESV_ERROR = sd(ERROR),
+    DESV_STDR = sd(ERROR),
     .groups = "drop"
   )
 
@@ -57,7 +59,7 @@ Z <- 1.65
 
 #Calculo del Stock de seguridad
 tStock_Seguridad <- q003DesvEstdr %>% 
-  mutate(STOCK_SEGURIDAD = round(Z * DESV_ERROR, 0)) 
+  mutate(STOCK_SEGURIDAD = round(Z * DESV_STDR, 0)) 
 
 #Lista de data frames a conservar
 vGuarda <- c("tStock_Seguridad") #Agregar datos que se guardan en el environment
