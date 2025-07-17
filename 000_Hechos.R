@@ -132,31 +132,8 @@ source("020_BackOrder.R")
 #Ventas
 source("030_Ventas.R")
 
-#Guardo Dataset en constante
-vDataSet <- vMantener
-
-#Lista de data frames a conservar
-vGuarda <- c("vDataSet") #Agregar datos que se guardan en el environment
-vMantener <- c(vMantener, vGuarda)
-
-#Necesidad y Requerimiento con Stock de Seguridad
 #Stock Seguridad
 source("060_Stock_Seguridad.R")
-
-#Necesidad
-source("040_Necesidad_SS.R")
-
-#Requerimiento
-source("050_Requerimiento_SS.R")
-
-#Necesidad y Requerimiento con 2 veces la proyeccion de la venta
-#Actualizo environment
-#Lista de data frames a conservar
-vMantener <- c(vDataSet) 
-vBorrar <- setdiff(ls(), vMantener)
-
-rm(list = vBorrar)
-rm(vBorrar)
 
 #Necesidad
 source("040_Necesidad.R")
