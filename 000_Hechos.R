@@ -57,7 +57,7 @@
   #0 <- Despliegue
   Modo <- 0
   
-  rSharePoint <- ifelse(Modo == 1, file.path("Documents", "Development", "REPORTES"), file.path("GrandVision/MX1-MV Supply Chain - Documentos"))
+  rSharePoint <- ifelse(Modo == 1, file.path("Documents", "Development", "REPORTES"), file.path("Luxottica Group S.p.A/PVC_EL_MX - Documentos"))
   
   #Path de la carpeta tablas
   rTablas <- file.path(rUser, rSharePoint, "Reportes" , "Forecast_Luxottica", "01_Tablas")
