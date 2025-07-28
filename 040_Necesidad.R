@@ -113,7 +113,7 @@ cSemanasSim <- max(unique(tLead_Time$LEAD_TIME_W)) + cSemanasVis #(Considerar LE
 for (n in 1:cSemanasSim) {
   
   #Sumamos fechas a la actual dependiendo el ciclo de la semanas
-  cFechaCiclo <- (today() - days(3)) + days(n * 7) #Multiplicamos el ciclo del bucle por 7 para interpretar los dias
+  cFechaCiclo <- (today() + days(n * 7)) #Multiplicamos el ciclo del bucle por 7 para interpretar los dias
   
   #Parche para definir la ultima semana del anio 2025
   if(cFechaCiclo >= as.Date("29-12-2025", format("%d-%m-%Y")) && cFechaCiclo <= as.Date("31-12-2025", format("%d-%m-%Y"))){
