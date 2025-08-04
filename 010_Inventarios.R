@@ -36,7 +36,8 @@ q001ConsolidaInv <- rbind(
 q002CruceInf <- q001ConsolidaInv %>% 
   left_join(tSucursales_Considerar[,c("ID_ALMACEN", "CONSIDERA")], by = "ID_ALMACEN") %>% #Cruce con Sucursales
   mutate_at(c("CONSIDERA"),~replace(.,is.na(.), "SI")) %>% #Rellena los vacion con SI para contemplar sucursales
-  left_join(tArt_Cat[,c("SKU", "ID_LINEA", "PACK", "TIPO", "ID_PROVEEDOR")], by = "SKU") #Cruce con catalogo de articulos
+  left_join(tArt_Cat[,c("SKU", "ID_LINEA", "PACK", "TIPO", "ID_PROVEEDOR")], by = "SKU") %>% #Cruce con catalogo de articulos
+  mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) #Solo se considera Pack para Mas Vision
   
 #Agrupacion de la informacion
 q002InfoFormat <- q002CruceInf %>% 

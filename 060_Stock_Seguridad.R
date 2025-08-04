@@ -22,6 +22,7 @@ tForecastEst <- read.csv(file.path(rTablas, "FORECAST.csv"), header = TRUE, sep 
 #================ Ejecucion ===================
 #Creando dataframe base
 q000DataFrameBase <- tForecastEst[,c("ID_EMPRESA", "ANIO", "SEMANA", "ID_LINEA", "PACK", "TIPO")] %>% 
+  mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
   unique() %>% 
   mutate(ID_EASLPT = paste(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, sep = "|"))
 
@@ -68,3 +69,4 @@ vBorrar <- setdiff(ls(), vMantener)
 
 rm(list = vBorrar)
 rm(vBorrar)
+

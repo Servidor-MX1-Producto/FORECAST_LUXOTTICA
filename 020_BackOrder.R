@@ -51,7 +51,9 @@ q001PPendientesClean <- q000PedidosFecha %>%
 
 #Cruza y filtra Informacion 
 q001InfoFormat <- q001PPendientesClean %>% 
-  left_join(tArt_Cat[,c("SKU", "ID_LINEA", "PACK", "TIPO", "ID_PROVEEDOR")], by = "SKU") %>% #Cruce con catalogo de Articulos
+  left_join(tArt_Cat[,c("SKU", "ID_LINEA", "PACK", "TIPO", "ID_PROVEEDOR", "ID_GENERICO")], by = "SKU") %>% #Cruce con catalogo de Articulos
+  mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
+  filter(ID_GENERICO == "A") %>% #Filtro para conservar solo Armazones
   filter(ID_PROVEEDOR == "LUM") %>% #Filtra Tipo de Marca
   filter(PEDIDO_PEND == "Y") %>% #Filtro pedido pendiente
   select(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO, PENDIENTE)

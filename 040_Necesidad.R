@@ -7,6 +7,7 @@
 #================ Importaciones ===================
 #Facing 
 tFacingEst <- read.csv(file.path(rTablas, "FACING.csv"), header = TRUE, sep = ",") %>% 
+  mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
   mutate(
     ID_EMPRESA = as.character(ID_EMPRESA),
     ANIO = as.integer(ANIO),
@@ -15,9 +16,11 @@ tFacingEst <- read.csv(file.path(rTablas, "FACING.csv"), header = TRUE, sep = ",
     PACK = as.character(PACK),
     TIPO = as.character(TIPO),
     FACING = as.integer(FACING))
+  
 
 #Forecast
 tForecastEst <- read.csv(file.path(rTablas, "FORECAST.csv"), header = TRUE, sep = ",") %>% 
+  mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
   mutate(
     ID_EMPRESA = as.character(ID_EMPRESA),
     ANIO = as.integer(ANIO),
@@ -36,6 +39,7 @@ tDataFrameCons <- rbind(
   tFacingEst[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")],
   tForecastEst[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")],
   tStock_Seguridad[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")]) %>% 
+  mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
   unique() %>% 
   mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
 
@@ -54,6 +58,7 @@ q000PedPend <- tPed_Pendiente %>%
 
 #Venta estimada
 q000FrcstEst <- tForecastEst %>%
+  mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
   filter(ANIO == as.numeric(cAnio)) %>% 
   filter(SEMANA == as.numeric(cSemana)) %>% 
   group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 
@@ -62,6 +67,7 @@ q000FrcstEst <- tForecastEst %>%
 
 #Facing Estimado
 q000FacingEst <- tFacingEst %>% 
+  mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
   filter(ANIO == as.numeric(cAnio)) %>% 
   filter(SEMANA == as.numeric(cSemana)) %>% 
   group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% 

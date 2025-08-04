@@ -27,6 +27,7 @@ q000VentasClean <- tVentas_Arm %>%
 #Cruza y filtra Informacion 
 q000InfoFormat <- q000VentasClean %>% 
   left_join(tArt_Cat[,c("SKU", "TIPO", "ID_LINEA", "PACK", "ID_PROVEEDOR", "MARCA")], by = "SKU") %>% 
+  mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
   filter(ID_PROVEEDOR == "LUM") %>% #Filtra Tipo de Marca
   group_by(ID_EMPRESA, ANIO, SEMANA, ID_LINEA, PACK, TIPO) %>% 
   summarise(VENTA = sum(VENTA)) %>% 
@@ -50,3 +51,4 @@ vBorrar <- setdiff(ls(), vMantener)
 
 rm(list = vBorrar)
 rm(vBorrar)
+
