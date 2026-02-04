@@ -13,6 +13,8 @@
   library("lubridate")
   if (!require("stringi")) install.packages("stringi")
   library("stringi")
+  if (!require("stringr")) install.packages("stringr")
+  library("stringr")
   if (!require("tidyr")) install.packages("tidyr")
   library("tidyr")
   if (!require("rio")) install.packages("rio")
@@ -21,6 +23,8 @@
   library("writexl")
   if (!require("ISOweek")) install.packages("ISOweek")
   library("ISOweek")
+  if (!require("purrr")) install.packages("purrr")
+  library("purrr")
   
   #Zona Horaria
   Sys.setenv(TZ = "Etc/GMT+6")
@@ -45,6 +49,144 @@
     cText <- paste("0000000000000", x, sep = "") 
     substr(cText, nchar(cText) - (n + 1), nchar(cText))
     
+  }
+  
+  #Funcion para leer archivos de Shipment
+  fLeerShipmentsArchivoExcel <- function(archivo) {
+    cat("Leyendo:", basename(archivo), "\n")
+    
+    tryCatch({
+      # Primero leer todas las columnas como texto para evitar problemas
+      datos <- read_excel(archivo, col_types = "text")
+      
+      # Verificar que las columnas requeridas existen
+      columnas_requeridas <- c(
+        "SAP Transports - Transport Number",
+        "Banner", 
+        "Deliveries - TOTAL Goods Issue Qty",
+        "Deliveries Detail - Order Document Number",
+        "Item - UPC Code",
+        "Goods Issue Date: Date"
+      )
+      
+      # Verificar columnas faltantes
+      columnas_faltantes <- setdiff(columnas_requeridas, names(datos))
+      if (length(columnas_faltantes) > 0) {
+        warning("Columnas faltantes en ", basename(archivo), ": ", 
+                paste(columnas_faltantes, collapse = ", "))
+      }
+      
+      # Seleccionar solo las columnas que existen y son requeridas
+      columnas_a_mantener <- intersect(columnas_requeridas, names(datos))
+      datos <- datos %>% select(all_of(columnas_a_mantener))
+      
+      # Convertir a los tipos de datos correctos
+      if ("Deliveries - TOTAL Goods Issue Qty" %in% names(datos)) {
+        datos$`Deliveries - TOTAL Goods Issue Qty` <- as.numeric(datos$`Deliveries - TOTAL Goods Issue Qty`)
+      }
+      
+      if ("Deliveries Detail - Order Document Number" %in% names(datos)) {
+        datos$`Deliveries Detail - Order Document Number` <- as.numeric(datos$`Deliveries Detail - Order Document Number`)
+      }
+      
+      if ("Item - UPC Code" %in% names(datos)) {
+        datos$`Item - UPC Code` <- as.numeric(datos$`Item - UPC Code`)
+      }
+      
+      if ("Goods Issue Date: Date" %in% names(datos)) {
+        datos$`Goods Issue Date: Date` <- as.Date(as.numeric(datos$`Goods Issue Date: Date`), origin = "1899-12-30")
+      }
+      
+      # Agregar columna de origen
+      datos$archivo_origen <- basename(archivo)
+      
+      return(datos)
+      
+    }, error = function(e) {
+      warning("Error al leer el archivo ", archivo, ": ", e$message)
+      return(NULL)
+    })
+  }
+  
+  #Funcion para leer archivos de Allocated
+  fLeerAllocatedArchivoExcel <- function(archivo) {
+    cat("Leyendo archivo allocated:", basename(archivo), "\n")
+    
+    tryCatch({
+      # Función para detectar si una fila contiene los encabezados esperados
+      detectar_fila_encabezados <- function(archivo) {
+        # Leer primera fila
+        fila1 <- read_excel(archivo, n_max = 1, col_names = FALSE)
+        # Leer segunda fila
+        fila2 <- read_excel(archivo, n_max = 1, col_names = FALSE, skip = 1)
+        
+        encabezados_esperados <- c("Banner", "Sales", "Created", "EAN", "Ordered", "Allocated")
+        
+        # Verificar cuántos encabezados esperados están en cada fila
+        coincidencias_fila1 <- sum(sapply(encabezados_esperados, function(x) any(grepl(x, as.character(fila1), ignore.case = TRUE))))
+        coincidencias_fila2 <- sum(sapply(encabezados_esperados, function(x) any(grepl(x, as.character(fila2), ignore.case = TRUE))))
+        
+        # Elegir la fila con más coincidencias
+        if (coincidencias_fila2 > coincidencias_fila1) {
+          return(1)  # saltar 1 fila
+        } else {
+          return(0)  # no saltar filas
+        }
+      }
+      
+      # Detectar si necesitamos saltar una fila
+      skip_filas <- detectar_fila_encabezados(archivo)
+      
+      # Leer el archivo (saltando filas si es necesario)
+      datos <- read_excel(archivo, col_types = "text", skip = skip_filas)
+      
+      columnas_requeridas <- c(
+        "Banner",
+        "Sales Doc.", 
+        "Created On",
+        "EAN/UPC",
+        "Ordered QTY",
+        "Allocated Qty"
+      )
+      
+      columnas_faltantes <- setdiff(columnas_requeridas, names(datos))
+      if (length(columnas_faltantes) > 0) {
+        warning("Columnas faltantes en ", basename(archivo), ": ", 
+                paste(columnas_faltantes, collapse = ", "))
+      }
+      
+      columnas_a_mantener <- intersect(columnas_requeridas, names(datos))
+      datos <- datos %>% select(all_of(columnas_a_mantener))
+      
+      # Conversiones de tipos 
+      if ("Sales Doc." %in% names(datos)) {
+        datos$`Sales Doc.` <- as.numeric(datos$`Sales Doc.`)
+      }
+      
+      if ("EAN/UPC" %in% names(datos)) {
+        datos$`EAN/UPC` <- as.numeric(datos$`EAN/UPC`)
+      }
+      
+      if ("Ordered QTY" %in% names(datos)) {
+        datos$`Ordered QTY` <- as.numeric(datos$`Ordered QTY`)
+      }
+      
+      if ("Allocated Qty" %in% names(datos)) {
+        datos$`Allocated Qty` <- as.numeric(datos$`Allocated Qty`)
+      }
+      
+      if ("Created On" %in% names(datos)) {
+        datos$`Created On` <- as.Date(as.numeric(datos$`Created On`), origin = "1899-12-30")
+      }
+      
+      datos$archivo_origen <- basename(archivo)
+      
+      return(datos)
+      
+    }, error = function(e) {
+      warning("Error al leer el archivo ", archivo, ": ", e$message)
+      return(NULL)
+    })
   }
   
   
@@ -116,6 +258,10 @@
     select(SKU, TIPO, ID_LINEA, PACK, EAN, MARCA, ID_PROVEEDOR, ID_GENERICO) %>% 
     unique()
   
+  #Pedidos Pendientes
+  tPedidos_Pendientes <- read.csv(file.path(rUser, rSharePoint, "Compras", "Pedidos", "01_Pedidos_Pendientes", "Pedidos_Pendientes.csv"), header = TRUE, sep = ",") %>% 
+    rename_all(toupper) 
+  
   #Elementos a mantener en el environment
   vMantener <- c("vMantener")
   vMantener <- c(vMantener, ls())
@@ -134,6 +280,9 @@ source("030_Ventas.R")
 
 #Stock Seguridad
 source("060_Stock_Seguridad.R")
+
+#Picking
+source("070_Picking.R")
 
 #Necesidad
 source("040_Necesidad.R")

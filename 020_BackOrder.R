@@ -7,10 +7,6 @@
 #     4.- 
 
 #================ Importaciones ===================
-#Pedidos Pendientes
-tPedidos_Pendientes <- read.csv(file.path(rUser, rSharePoint, "Compras", "Pedidos", "01_Pedidos_Pendientes", "Pedidos_Pendientes.csv"), header = TRUE, sep = ",") %>% 
-  rename_all(toupper) 
-
 #Lead time
 tLead_Time <- read.csv(file.path(rTablas, "LEAD_TIME.csv"), header = TRUE, sep = ",")
 
