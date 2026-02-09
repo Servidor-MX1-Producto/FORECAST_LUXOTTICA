@@ -38,7 +38,8 @@ tDataFrameCons <- rbind(
   tVenta[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")],
   tFacingEst[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")],
   tForecastEst[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")],
-  tStock_Seguridad[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")]) %>% 
+  tStock_Seguridad[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")], 
+  tPicking[,c("ID_EMPRESA", "ID_LINEA", "PACK", "TIPO")]) %>% 
   mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
   unique() %>% 
   mutate(ID_ELPT = paste(ID_EMPRESA, ID_LINEA, PACK, TIPO, sep = "|"))
@@ -85,16 +86,17 @@ q000CruceInfo <- tDataFrameCons %>%
   left_join(q000FrcstEst[,c("ID_ELPT", "FORECAST")], by = "ID_ELPT") %>% 
   left_join(q000FacingEst[,c("ID_ELPT", "FACING")], by = "ID_ELPT") %>% 
   left_join(q000StockSeg[,c("ID_ELPT", "STOCK_SEGURIDAD")], by = "ID_ELPT") %>% 
-  mutate_at(c("INVENTARIO", "PENDIENTE", "FORECAST", "FACING", "STOCK_SEGURIDAD"), ~replace(., is.na(.), 0)) 
+  left_join(tPicking[,c("ID_ELPT", "PICKING")], by = "ID_ELPT") %>% 
+  mutate_at(c("INVENTARIO", "PENDIENTE", "FORECAST", "FACING", "STOCK_SEGURIDAD", "PICKING"), ~replace(., is.na(.), 0)) 
 
 #Calculos de Necesidad
 q001Ncsd <- q000CruceInfo %>% 
-  mutate(INV_F_SS = INVENTARIO + PENDIENTE - FORECAST) %>% #Inventario Final
+  mutate(INV_F_SS = INVENTARIO + PICKING + PENDIENTE - FORECAST) %>% #Inventario Final
   mutate(INV_F_SS = ifelse(INV_F_SS < 0, 0, INV_F_SS)) %>% 
   mutate(INV_I_SS = FACING + STOCK_SEGURIDAD) %>% #Inventario Inicial con Stock de Seguridad
   mutate(NECESIDAD_SS = INV_I_SS - INV_F_SS) %>% #Necesidad con Stock de Seguridad
   mutate(NECESIDAD_SS = ifelse(NECESIDAD_SS < 0, 0, NECESIDAD_SS)) %>% 
-  mutate(INV_F = INVENTARIO + PENDIENTE - FORECAST) %>% #Inventario Final
+  mutate(INV_F = INVENTARIO + PICKING + PENDIENTE - FORECAST) %>% #Inventario Final
   mutate(INV_F = ifelse(INV_F < 0, 0, INV_F)) %>% 
   mutate(INV_I = FACING + FORECAST) %>% #Inventario Inicial con Forecast
   mutate(NECESIDAD = INV_I - INV_F) %>%  #Necesidad con Forecast
@@ -102,7 +104,7 @@ q001Ncsd <- q000CruceInfo %>%
   mutate(ANIO = cAnio) %>% 
   mutate(SEMANA = cSemana) %>% 
   arrange(desc(ID_EMPRESA), ID_LINEA, PACK, TIPO) %>% 
-  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, INV_F_SS, INV_I_SS, NECESIDAD_SS, SEMANA, ANIO)
+  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, PICKING, FACING, INV_F, INV_I, NECESIDAD, INV_F_SS, INV_I_SS, NECESIDAD_SS, SEMANA, ANIO)
 
 #Dataframe donde se ira agregando las necesidades por semana
 q004Ncsd <- q001Ncsd
