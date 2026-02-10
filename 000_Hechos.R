@@ -286,10 +286,16 @@ source("060_Stock_Seguridad.R")
 #Picking
 source("070_Picking.R")
 
-#Necesidad
-source("040_Necesidad.R")
+#Ejecuta si es dia Lunes
+if (wday(today()) == 2) {
+  
+  #Necesidad
+  source("040_Necesidad.R")
+  
+  #Requerimiento
+  source("050_Requerimiento.R")
+  
+}
 
-#Requerimiento
-source("050_Requerimiento.R")
 
 rm(list = ls())

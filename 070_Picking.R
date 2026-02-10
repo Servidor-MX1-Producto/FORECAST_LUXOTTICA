@@ -10,29 +10,35 @@
 #Filtramos Archivos de Facturas de los ultimos 12 meses
 
 #Define mes limite
-cMesLimite <- cPrimerDiaMes - months(12)
+# cMesLimite <- cPrimerDiaMes - months(12)
+# 
+# #Listamos archivos de facturas y filtramos por fecha
+# tFilesFactura <- list.files(path = file.path(rUser, rSharePoint, "Reportes" , "Pedidos_Pendientes", "01_Tablas", "Facturas"), pattern = "Facturas_\\d{4}\\.csv$", full.names = TRUE) %>% 
+#   keep(~{
+#     
+#     #Extraer año y mes del nombre
+#     q000FechaArchivo <- str_extract(., "Facturas_(\\d{4})") %>% #obtiene el año y mes del nombre del archivo
+#       str_remove("Facturas_") #Elimina el prefijo para quedarse solo con el año y mes
+#     
+#     if (is.na(q000FechaArchivo)) return(FALSE) #Si no hay archivos termina funcion
+#     
+#     q000Anio <- 2000 + as.numeric(substr(q000FechaArchivo, 1, 2)) #Define el Anio del nombre de los archivos
+#     q000Mes <- as.numeric(substr(q000FechaArchivo, 3, 4)) #Define el Mes del nombre de los archivos
+#     q000FechaArchivo <- make_date(q000Anio, q000Mes, 1) #Convierte el año y mes a una fecha
+#     
+#     q000FechaArchivo >= cMesLimite & q000FechaArchivo <= cPrimerDiaMes #Filtra archivos que estén dentro del rango de fecha 
+#   })
+# 
+# #Leyendo archivos de Facturas
+# tFacturas <- map_dfr(tFilesFactura, ~{ 
+#   read.csv(.x) %>%
+#     mutate(archivo_origen = basename(.x))}) %>% 
+#   rename_all(toupper) %>% 
+#   mutate(FEC_REC = as.Date(FEC_REC, format = "%Y-%m-%d")) %>%
+#   mutate(ID_PS = paste(FOLIO_PEDIDO, SKU, sep = "|"))
 
-#Listamos archivos de facturas y filtramos por fecha
-tFilesFactura <- list.files(path = file.path(rUser, rSharePoint, "Reportes" , "Pedidos_Pendientes", "01_Tablas", "Facturas"), pattern = "Facturas_\\d{4}\\.csv$", full.names = TRUE) %>% 
-  keep(~{
-    
-    #Extraer año y mes del nombre
-    q000FechaArchivo <- str_extract(., "Facturas_(\\d{4})") %>% #obtiene el año y mes del nombre del archivo
-      str_remove("Facturas_") #Elimina el prefijo para quedarse solo con el año y mes
-    
-    if (is.na(q000FechaArchivo)) return(FALSE) #Si no hay archivos termina funcion
-    
-    q000Anio <- 2000 + as.numeric(substr(q000FechaArchivo, 1, 2)) #Define el Anio del nombre de los archivos
-    q000Mes <- as.numeric(substr(q000FechaArchivo, 3, 4)) #Define el Mes del nombre de los archivos
-    q000FechaArchivo <- make_date(q000Anio, q000Mes, 1) #Convierte el año y mes a una fecha
-    
-    q000FechaArchivo >= cMesLimite & q000FechaArchivo <= cPrimerDiaMes #Filtra archivos que estén dentro del rango de fecha 
-  })
-
-#Leyendo archivos de Facturas
-tFacturas <- map_dfr(tFilesFactura, ~{ 
-  read.csv(.x) %>%
-    mutate(archivo_origen = basename(.x))}) %>% 
+#Facturas
+tFacturas <- read.csv(file.path(rUser, rSharePoint, "Reportes" , "Pedidos_Pendientes", "02_Reportes", "04_Facturas_Consolidado_6M.csv"), header = TRUE, sep = ",") %>% 
   rename_all(toupper) %>% 
   mutate(FEC_REC = as.Date(FEC_REC, format = "%Y-%m-%d")) %>%
   mutate(ID_PS = paste(FOLIO_PEDIDO, SKU, sep = "|"))
@@ -132,7 +138,10 @@ q002AnlssTime <- q001AllocFormat %>%
   select(BANNER, SALES_DOC, CREATED_DATE, UPC_CODE, ORDERED_QTY, ALLOCATED_QTY, T_ENVIADO, P_ENVIO, U_ENVIO, FECHA_RECEPCION, FECHA_PROMESA, T_1E_ENVIO, T_ULT_ENVIO, T_ENVIO_REC, CUMPLIO_PROMESA, DIAS_VAR_PROMESA, BACK_ORDER, PORCENTAJE_SURTIDO, ESTADO_SURTIDO, DIFERENCIA_ALLOCATED_ENVIADO, EFICIENCIA_ALLOCATED)
 
 #Escribe Reporte
-write.csv(q002AnlssTime, file.path(rReportes, paste("PICKING.csv", sep = "")), row.names = FALSE)
+write.csv(q002AnlssTime, file.path(rReportes, "PICKING.csv"), row.names = FALSE)
+
+#Pedidos Pendientes
+write.csv(q002AnlssTime, file.path(rUser, rSharePoint, "Reportes", "Pedidos_Pendientes", "02_Reportes", "Picking.csv"), row.names = FALSE)
 
 #Data frame final a guardar en el environment
 tPicking <- q002AnlssTime %>% 
