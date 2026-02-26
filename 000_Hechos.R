@@ -245,6 +245,9 @@ fLeerAllocatedArchivoExcel <- function(cArchivo) {
   cSemanas <- 8
   cFechaSemanas <- (today() -1) %m+% weeks(-cSemanas)
   
+  cDiasAllocated <- 15
+  cFechaDiasAllocated <- (today()) %m+% days(-cDiasAllocated)
+  
   #================ Catalogos ================ 
   #Articulo de Catalogo
   tArt_Cat <- read.csv(file.path(rQlik_PVC, "ART_CAT.csv"), header = TRUE, sep = ",") %>% 

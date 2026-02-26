@@ -101,7 +101,7 @@ q001EnviosGroup <- q001ShipFormat %>%
   ) %>% 
   mutate(ID_SD = paste(SALES_DOC, UPC_CODE, sep = "|")) 
 
-#Formato a info de allocated
+#Formato a info de allocated, con filtro de n dias que se completan
 q001AllocFormat <- tAllocated %>% 
   rename(   
     BANNER = "BANNER",
@@ -113,7 +113,10 @@ q001AllocFormat <- tAllocated %>%
     ARCHIVO_ALLOCATED = "ARCHIVO_ORIGEN"
   ) %>% 
   mutate(UPC_CODE = fRight(UPC_CODE, 13)) %>% 
-  mutate(ID_SD =  paste(SALES_DOC , UPC_CODE, sep = "|")) 
+  mutate(CREATED_DATE = as.Date(CREATED_DATE, format = format("%Y-%m-%d"))) %>% 
+  mutate(ID_SD =  paste(SALES_DOC , UPC_CODE, sep = "|")) %>% 
+  filter(CREATED_DATE >= cFechaDiasAllocated) #Filtro de Fecha
+  
 
 #Analisis de tiempo
 q002AnlssTime <- q001AllocFormat %>% 
