@@ -121,7 +121,7 @@ cSemanasSim <- max(unique(tLead_Time$LEAD_TIME_W)) + cSemanasVis #(Considerar LE
 for (n in 1:cSemanasSim) {
   
   #Sumamos fechas a la actual dependiendo el ciclo de la semanas
-  cFechaCiclo <- (today() - days(2) + days(n * 7)) #Multiplicamos el ciclo del bucle por 7 para interpretar los dias
+  cFechaCiclo <- (today() + days(n * 7)) #Multiplicamos el ciclo del bucle por 7 para interpretar los dias
   cSemanaCiclo <- as.numeric(strftime(cFechaCiclo, format("%V")))
   cMesCiclo <- substring(cFechaCiclo, 6, 7)
   cAnioCiclo <- substring(cFechaCiclo, 1, 4)
