@@ -121,15 +121,8 @@ cSemanasSim <- max(unique(tLead_Time$LEAD_TIME_W)) + cSemanasVis #(Considerar LE
 for (n in 1:cSemanasSim) {
   
   #Sumamos fechas a la actual dependiendo el ciclo de la semanas
-  cFechaCiclo <- (today() + days(n * 7)) #Multiplicamos el ciclo del bucle por 7 para interpretar los dias
-  
-  #Parche para definir la ultima semana del anio 2025
-  if(cFechaCiclo >= as.Date("29-12-2025", format("%d-%m-%Y")) && cFechaCiclo <= as.Date("31-12-2025", format("%d-%m-%Y"))){
-    cSemanaCiclo <- 53
-  } else {
-    cSemanaCiclo <- as.numeric(strftime(cFechaCiclo, format("%V")))
-  }
-  
+  cFechaCiclo <- (today() - days(2) + days(n * 7)) #Multiplicamos el ciclo del bucle por 7 para interpretar los dias
+  cSemanaCiclo <- as.numeric(strftime(cFechaCiclo, format("%V")))
   cMesCiclo <- substring(cFechaCiclo, 6, 7)
   cAnioCiclo <- substring(cFechaCiclo, 1, 4)
   
@@ -174,16 +167,17 @@ for (n in 1:cSemanasSim) {
     left_join(q002FrcstEst[,c("ID_ELPT", "FORECAST")], by = "ID_ELPT") %>% 
     left_join(q002FacingEst[,c("ID_ELPT", "FACING")], by = "ID_ELPT") %>% 
     left_join(q000StockSeg[,c("ID_ELPT", "STOCK_SEGURIDAD")], by = "ID_ELPT") %>% 
+    mutate(PICKING = 0) %>% 
     mutate_at(c("INVENTARIO", "INVENTARIO_SS", "PENDIENTE", "FORECAST", "FACING", "STOCK_SEGURIDAD"), ~replace(., is.na(.), 0)) 
   
   #Calculos de Necesidad
   q001Ncsd <- q002CruceInfo %>% 
-    mutate(INV_F_SS = INVENTARIO_SS + PENDIENTE - FORECAST) %>% #Inventario Final
+    mutate(INV_F_SS = INVENTARIO_SS + PICKING + PENDIENTE - FORECAST) %>% #Inventario Final
     mutate(INV_F_SS = ifelse(INV_F_SS < 0, 0, INV_F_SS)) %>% 
     mutate(INV_I_SS = FACING + STOCK_SEGURIDAD) %>% #Inventario Inicial con Stock de Seguridad
     mutate(NECESIDAD_SS = INV_I_SS - INV_F_SS) %>% #Necesidad con Stock de Seguridad
     mutate(NECESIDAD_SS = ifelse(NECESIDAD_SS < 0, 0, NECESIDAD_SS)) %>% 
-    mutate(INV_F = INVENTARIO + PENDIENTE - FORECAST) %>% #Inventario Final
+    mutate(INV_F = INVENTARIO + PICKING + PENDIENTE - FORECAST) %>% #Inventario Final
     mutate(INV_F = ifelse(INV_F < 0, 0, INV_F)) %>% 
     mutate(INV_I = FACING + FORECAST) %>% #Inventario Inicial con Forecast
     mutate(NECESIDAD = INV_I - INV_F) %>%  #Necesidad con Forecast
@@ -191,7 +185,7 @@ for (n in 1:cSemanasSim) {
     mutate(ANIO = cAnioCiclo) %>% 
     mutate(SEMANA = cSemanaCiclo) %>% 
     arrange(desc(ID_EMPRESA), ID_LINEA, PACK, TIPO) %>% 
-    select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, INV_F_SS, INV_I_SS, NECESIDAD_SS, SEMANA, ANIO)
+    select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, PICKING, FACING, INV_F, INV_I, NECESIDAD, INV_F_SS, INV_I_SS, NECESIDAD_SS, SEMANA, ANIO)
   
   #Agregamos al datframe Consolidado
   q004Ncsd <- q004Ncsd %>% 
@@ -215,7 +209,7 @@ tNecesidad <- q004NcsLT %>%
   mutate(DATE_WEEK = ISOweek2date(sprintf("%d-W%02d-1", as.numeric(ANIO), as.numeric(SEMANA)))) %>% #Creamos una fecha (dia inicial) a partir de la semana y anio que tenemos en data
   mutate(DATE_LEAD_TIME = ISOweek2date(sprintf("%d-W%02d-1", as.numeric(cAnio), as.numeric(cSemana))) + weeks(LEAD_TIME_W + cSemanasVis)) %>%  #Creamos una fecha a partir de la semana que estamos ejecutando el proceso y la suma de las semanas correspondientes al lead time y semanas de visibilidad 
   filter(DATE_WEEK <= DATE_LEAD_TIME) %>% #Filtramos que en el reporte aparezcan solo las semanas de Lead time mas las semana de visibilidad
-  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, INV_F_SS, INV_I_SS, NECESIDAD_SS, LEAD_TIME_W, SEMANA, ANIO, ID_PROVEEDOR)
+  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, PICKING, FACING, INV_F, INV_I, NECESIDAD, INV_F_SS, INV_I_SS, NECESIDAD_SS, LEAD_TIME_W, SEMANA, ANIO, ID_PROVEEDOR)
 
 #Escribe reporte
 #write.csv(tNecesidad, file.path(rReportes, "NCSD.csv"), row.names = FALSE)

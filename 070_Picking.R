@@ -126,8 +126,8 @@ q002AnlssTime <- q001AllocFormat %>%
   mutate(T_ENVIO_REC = as.numeric(difftime(FECHA_RECEPCION, P_ENVIO, units = "days"))) %>% #Tiempo desde primer envío hasta recepción
   mutate(CUMPLIO_PROMESA = FECHA_RECEPCION <= FECHA_PROMESA) %>% #¿Llegó antes de la fecha prometida?
   mutate(DIAS_VAR_PROMESA = as.numeric(difftime(FECHA_RECEPCION, FECHA_PROMESA, units = "days"))) %>% 
-  mutate(BACK_ORDER = ORDERED_QTY - T_ENVIADO) %>%  #Estado del surtido
-  mutate(PORCENTAJE_SURTIDO = ifelse(ORDERED_QTY > 0, T_ENVIADO / ORDERED_QTY * 100, 0)) %>% 
+  mutate(BACK_ORDER = ALLOCATED_QTY - T_ENVIADO) %>%  #Estado del surtido
+  mutate(PORCENTAJE_SURTIDO = ifelse(ALLOCATED_QTY > 0, T_ENVIADO / ALLOCATED_QTY * 100, 0)) %>% 
   mutate(ESTADO_SURTIDO = case_when(
       PORCENTAJE_SURTIDO >= 100 ~ "COMPLETAMENTE SURTIDO",
       PORCENTAJE_SURTIDO > 0 ~ "PARCIALMENTE SURTIDO", 
@@ -150,11 +150,9 @@ write.csv(q002AnlssTime, file.path(rUser, rSharePoint, "Reportes", "Pedidos_Pend
 tPicking <- q002AnlssTime %>% 
   left_join(tArt_Cat[,c("EAN", "TIPO", "ID_LINEA", "PACK", "SKU")], by = c("UPC_CODE" = "EAN")) %>% 
   mutate(ID_EMPRESA = case_when(
-    BANNER == "GV MAS VISION MX" ~ "11",
+    BANNER %in% c("GV MAS VISION MX", "GV MAX VISION MX") ~ "11",
     BANNER == "GV OPTICAS LUX MX" ~ "2",
-    #BANNER == "GV OPTICAS LUX MX" ~ "7",
-    TRUE ~ NA_character_  # Corrección: NA explícito para tipo numerico
-  )) %>% 
+    TRUE ~ NA_character_)) %>% 
   mutate(PACK = ifelse(ID_EMPRESA != c(11) | is.na(PACK) | nchar(PACK) == 0, "-", PACK)) %>% #Solo se considera Pack para Mas Vision
   group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% #Agrupacion
   summarise(PICKING = sum(BACK_ORDER)) %>% 

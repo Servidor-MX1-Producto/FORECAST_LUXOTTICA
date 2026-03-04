@@ -25,7 +25,7 @@ q001CalcReq <- q001IdSemana %>%
 
 #Estructura al reporte de requerimiento
 q001Requerimiento <- q001IdSemana %>% #Tomamos dataframe base para realizar los cruces
-  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, INV_F_SS, INV_I_SS, NECESIDAD_SS, SEMANA, ANIO, ID_PROVEEDOR) %>% 
+  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, PICKING, FACING, INV_F, INV_I, NECESIDAD, INV_F_SS, INV_I_SS, NECESIDAD_SS, SEMANA, ANIO, ID_PROVEEDOR) %>% 
   mutate(cDelta02 = 1) %>% 
   group_by(ID_EMPRESA, ID_LINEA, PACK, TIPO) %>% #Agrupamos para generar ID_SEMANA
   mutate(ID_SEMANA = cumsum(cDelta02)) %>% 
@@ -36,7 +36,7 @@ q001Requerimiento <- q001IdSemana %>% #Tomamos dataframe base para realizar los 
   mutate(REQUERIMIENTO = ifelse(REQUERIMIENTO < 0, 0, REQUERIMIENTO)) %>% 
   data.frame() %>% 
   arrange(ID_EMPRESA, ID_LINEA, PACK, TIPO, ANIO, SEMANA) %>% 
-  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, ID_PROVEEDOR, SEMANA, ANIO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, FACING, INV_F, INV_I, NECESIDAD, REQUERIMIENTO, INV_F_SS, INV_I_SS, NECESIDAD_SS, REQUERIMIENTO_SS)
+  select(ID_EMPRESA, ID_LINEA, PACK, TIPO, ID_PROVEEDOR, SEMANA, ANIO, INVENTARIO, PENDIENTE, FORECAST, STOCK_SEGURIDAD, PICKING, FACING, INV_F, INV_I, NECESIDAD, REQUERIMIENTO, INV_F_SS, INV_I_SS, NECESIDAD_SS, REQUERIMIENTO_SS)
 
 #Escribe reporte de requerimeinto
 write.csv(q001Requerimiento, file.path(rReportes, "REQUERIMIENTO.csv"), row.names = FALSE)
