@@ -121,6 +121,7 @@ q001AllocFormat <- tAllocated %>%
 #Analisis de tiempo
 q002AnlssTime <- q001AllocFormat %>% 
   left_join(q001EnviosGroup[,c("ID_SD", "T_ENVIADO", "P_ENVIO", "U_ENVIO", "FECHA_RECEPCION", "FECHA_PROMESA")], by = "ID_SD") %>%
+  mutate_at(c("T_ENVIADO"), ~replace(., is.na(.), 0)) %>% 
   mutate(T_1E_ENVIO = as.numeric(difftime(P_ENVIO, CREATED_DATE, units = "days"))) %>% #Tiempo desde solicitud hasta primer envío
   mutate(T_ULT_ENVIO = as.numeric(difftime(U_ENVIO, CREATED_DATE, units = "days"))) %>% #Tiempo desde solicitud hasta último envío (si hay múltiples envíos)
   mutate(T_ENVIO_REC = as.numeric(difftime(FECHA_RECEPCION, P_ENVIO, units = "days"))) %>% #Tiempo desde primer envío hasta recepción
@@ -138,7 +139,8 @@ q002AnlssTime <- q001AllocFormat %>%
   mutate(EFICIENCIA_ALLOCATED = ifelse(ALLOCATED_QTY > 0, T_ENVIADO / ALLOCATED_QTY * 100, 0)) %>% 
   mutate(BACK_ORDER = ifelse(is.na(BACK_ORDER), ALLOCATED_QTY, BACK_ORDER)) %>%
   arrange(desc(CREATED_DATE)) %>% 
-  select(BANNER, SALES_DOC, CREATED_DATE, UPC_CODE, ORDERED_QTY, ALLOCATED_QTY, T_ENVIADO, P_ENVIO, U_ENVIO, FECHA_RECEPCION, FECHA_PROMESA, T_1E_ENVIO, T_ULT_ENVIO, T_ENVIO_REC, CUMPLIO_PROMESA, DIAS_VAR_PROMESA, BACK_ORDER, PORCENTAJE_SURTIDO, ESTADO_SURTIDO, DIFERENCIA_ALLOCATED_ENVIADO, EFICIENCIA_ALLOCATED)
+  left_join(tArt_Cat[,c("EAN", "TIPO", "ID_LINEA", "PACK", "SKU")], by = c("UPC_CODE" = "EAN")) %>% 
+  select(BANNER, SALES_DOC, CREATED_DATE, UPC_CODE, SKU, PACK, ID_LINEA, TIPO, ORDERED_QTY, ALLOCATED_QTY, T_ENVIADO, P_ENVIO, U_ENVIO, FECHA_RECEPCION, FECHA_PROMESA, T_1E_ENVIO, T_ULT_ENVIO, T_ENVIO_REC, CUMPLIO_PROMESA, DIAS_VAR_PROMESA, BACK_ORDER, PORCENTAJE_SURTIDO, ESTADO_SURTIDO, DIFERENCIA_ALLOCATED_ENVIADO, EFICIENCIA_ALLOCATED)
 
 #Escribe Reporte
 write.csv(q002AnlssTime, file.path(rReportes, "PICKING.csv"), row.names = FALSE)
@@ -148,7 +150,6 @@ write.csv(q002AnlssTime, file.path(rUser, rSharePoint, "Reportes", "Pedidos_Pend
 
 #Data frame final a guardar en el environment
 tPicking <- q002AnlssTime %>% 
-  left_join(tArt_Cat[,c("EAN", "TIPO", "ID_LINEA", "PACK", "SKU")], by = c("UPC_CODE" = "EAN")) %>% 
   mutate(ID_EMPRESA = case_when(
     BANNER %in% c("GV MAS VISION MX", "GV MAX VISION MX") ~ "11",
     BANNER == "GV OPTICAS LUX MX" ~ "2",
