@@ -117,12 +117,12 @@ cSemanasVis <- 4
 cSemanasSim <- max(unique(tLead_Time$LEAD_TIME_W)) + cSemanasVis #(Considerar LEAD time por proveedor (Lead_Time + 4))
 
 #Bucle
-#n <- 1
+n <- 1
 for (n in 1:cSemanasSim) {
   
   #Sumamos fechas a la actual dependiendo el ciclo de la semanas
   cFechaCiclo <- (today() + days(n * 7)) #Multiplicamos el ciclo del bucle por 7 para interpretar los dias
-  cSemanaCiclo <- as.numeric(strftime(cFechaCiclo, format("%V")))
+  cSemanaCiclo <- as.numeric(strftime(cFechaCiclo, format("%V"))) - 1
   cMesCiclo <- substring(cFechaCiclo, 6, 7)
   cAnioCiclo <- substring(cFechaCiclo, 1, 4)
   

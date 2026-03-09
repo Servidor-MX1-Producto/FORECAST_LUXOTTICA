@@ -229,7 +229,7 @@ fLeerAllocatedArchivoExcel <- function(cArchivo) {
   cMes <- substring((Sys.time()-3), 6, 7)
   
   #Semana
-  cSemana <- as.numeric(strftime(today(), format("%V")))
+  cSemana <- as.numeric(strftime(today(), format("%V"))) - 1
   
   #Día
   cDia <- substring((Sys.time()-3), 9, 10)
